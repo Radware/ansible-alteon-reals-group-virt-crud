@@ -1,0 +1,24 @@
+#property('summary', 'Create new real server [2019-01-31 10:00]')
+
+#device($alteon, 'type=alteon', 'prompt=Alteon')
+#param($real_servers,'RealServerParams[]','in')
+
+#typedef('RealServerParams')
+	#param($name,'string', 'in','required=true')
+	#param($address,'ip','in','required=true')
+	#param($weight,'int','defaultValue=1')
+	#param($state,'string', 'in','required=true', 'defaultValue=disable', 'values=enable,disable')
+    #param($action, 'string', 'values=create,delete,update')
+#end
+
+#foreach($real in $real_servers)
+  #if($real.action == 'create' or $real.action == 'update')
+      /c/slb/real $real.name
+          rip $real.address
+          weight $real.weight
+          $real.state.substring(0, 3)
+  #else
+    /c/slb/real $real.name/del
+  #end
+
+#end

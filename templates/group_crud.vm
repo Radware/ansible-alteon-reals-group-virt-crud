@@ -1,0 +1,24 @@
+#property('summary', 'Create new group [2019-01-31 10:00]')
+
+#device($alteon, 'type=alteon', 'prompt=Alteon')
+#typedef('GroupParams')
+    #param($name,'string', 'in','required=true')
+	#param($metric,'string','defaultValue=leastconns','values=roundrobin,leastconns,phash,svcleast,bandwidth,minmisses,response')
+	#param($hc,'string', 'in','required=false', 'defaultValue=tcp','values=icmp,tcp,udp,arp,http,https')
+	#param($real_servers,'string[]')
+    #param($action, 'string', 'values=create,delete,update')
+#end
+#param('group','GroupParams', 'in','required=true')
+
+#if($group.action == 'create' or $group.action == 'update')
+    /c/slb/group $group.name
+        metric $group.metric
+        health $group.hc
+    ## adding real servers to group
+    #foreach($real in $group.real_servers)
+        add $real
+    #end
+#else
+    /c/slb/group $group.name/del
+#end
+

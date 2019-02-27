@@ -1,0 +1,59 @@
+- hosts: localhost
+  vars_files:
+    - vars/vdirect_params.yml
+    - vars/slb_params.yml
+  tasks:
+  - name: Uploading the template to vDirect (Alteon)
+    tags:
+    - upload
+    vdirect_file:
+      vdirect_ip: "{{ vdirect_ip }}"
+      vdirect_user: "{{ vdirect_user }}"
+      vdirect_password: "{{ vdirect_password }}"
+      vdirect_validate_certs: "{{ vdirect_validate_certs }}"
+      file_name: "{{ configuration_template_file }}"
+  - name: Real Servers CRUD on device:{{device}} and action:{{action}}
+    tags:
+    - reals
+    vdirect_runnable:
+      vdirect_ip: "{{ vdirect_ip }}"
+      vdirect_user: "{{ vdirect_user }}"
+      vdirect_password: "{{ vdirect_password }}"
+      vdirect_validate_certs: "{{ vdirect_validate_certs }}"
+      runnable_type: ConfigurationTemplate
+      runnable_name: real_servers_crud.vm
+      parameters: {'alteon':{'type':'Adc','name': "{{ device }}"}, 'real_servers': "{{ real_servers }}",'__dryRun': "{{dry_run}}"}
+  - name: Group CRUD on device:{{device}} and action:{{action}}
+    tags:
+    - group
+    vdirect_runnable:
+      vdirect_ip: "{{ vdirect_ip }}"
+      vdirect_user: "{{ vdirect_user }}"
+      vdirect_password: "{{ vdirect_password }}"
+      vdirect_validate_certs: "{{ vdirect_validate_certs }}"
+      runnable_type: ConfigurationTemplate
+      runnable_name: group_crud.vm
+      parameters: {'alteon':{'type':'Adc','name': "{{ device }}"}, 'group': "{{ group }}",'__dryRun': "{{dry_run}}"}
+  - name: Application CRUD on device:{{device}} and action:{{action}}
+    tags:
+    - virt
+    vdirect_runnable:
+      vdirect_ip: "{{ vdirect_ip }}"
+      vdirect_user: "{{ vdirect_user }}"
+      vdirect_password: "{{ vdirect_password }}"
+      vdirect_validate_certs: "{{ vdirect_validate_certs }}"
+      runnable_type: ConfigurationTemplate
+      runnable_name: virt_crud.vm
+      parameters: {'alteon':{'type':'Adc','name': "{{ device }}"}, 'app': "{{ app }}",'__dryRun': "{{dry_run}}"}
+  - name: commit
+    tags:
+    - commit
+    vdirect_commit:
+      vdirect_ip: "{{ vdirect_ip }}"
+      vdirect_user: "{{ vdirect_user }}"
+      vdirect_password: "{{ vdirect_password }}"
+      vdirect_validate_certs: "{{ vdirect_validate_certs }}"
+      devices: ["{{ device }}"]
+      sync: no
+      apply: yes
+      save: no

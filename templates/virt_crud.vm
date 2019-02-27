@@ -1,0 +1,49 @@
+#property('summary', 'Create new virt [2019-02-26 10:00]')
+
+#typedef('ServiceParams')
+	#param($protocol,'string','defaultValue=http','values=http,https,basic-slb,ftp,ssh,ldap')
+	#param($port,'int','defaultValue=80', 'required=true')
+	#param($persistency, 'string','defaultValue=dis','values=dis,clientip,cookie')
+    #param($pip_address,'ip','defaultValue=0.0.0.0')
+	#param($group,'string', 'required=true')
+    #param($dbind,'string','defaultValue=disable','values=enable,disable,forceproxy', 'required=true')
+#end
+#typedef('VipParams')
+	#param($name,'string','required=false')
+	#param($address,'ip')
+	#param($state,'string', 'in','required=false', 'defaultValue=disable', 'values=enable,disable')
+	#param($service_params,'ServiceParams')
+    #param($action, 'string', 'values=create,delete,update')
+#end
+
+#set($service = $app.service_params)
+
+
+#device($alteon, 'type=alteon', 'prompt=Alteon')
+#param($app,'VipParams', 'in','required=true')
+
+#####################################################
+## virt configuration
+#####################################################
+#if($app.action == 'create' or $app.action == 'update')
+    /c/slb/virt $app.name
+        $app.state.substring(0, 3)
+        vip $app.address
+      
+    #####################################################
+    ## service configuration
+    #####################################################
+
+    /c/slb/virt $app.name/service $service.port $service.protocol
+        group $service.group
+        dbind $service.dbind
+
+    #if($service.pip_address != '0.0.0.0')
+        /c/slb/virt $app.name/service $service.port $service.protocol/pip
+            mode address
+            addr v4 $service.pip_address 255.255.255.255 persist disable
+    #end
+#else
+    /c/slb/virt $app.name/del
+#end
+

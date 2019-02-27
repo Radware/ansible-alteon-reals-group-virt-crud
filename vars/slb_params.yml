@@ -1,0 +1,39 @@
+---
+configuration_template_file: ../templates/create_real_server.vm
+#The name of Alteon device as it appears in vDirect->Inventory->ADCs
+device:  my_adc
+action: create
+dry_run: false
+
+real_servers:
+- name: test1
+  address: 1.1.1.1
+  weight: 1
+  state: enable
+  action: "{{ action }}"
+- name: test2
+  address: 1.1.1.2
+  weight: 1
+  state: enable
+  action: "{{ action }}"
+group: 
+  name: test
+  metric: leastconns
+  hc: tcp
+  real_servers:
+  - test1
+  - test2
+  action: "{{ action }}"
+app:
+  name: test
+  address: 4.4.4.4
+  state: enable
+  service_params:
+    protocol: http
+    port: 80
+    persistency: dis
+    pip_address: 6.6.6.6
+    group: test
+    dbind: enable
+  action: "{{ action }}"
+
