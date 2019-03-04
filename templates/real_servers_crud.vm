@@ -12,13 +12,26 @@
 #end
 
 #foreach($real in $real_servers)
-  #if($real.action == 'create' or $real.action == 'update')
-      /c/slb/real $real.name
-          rip $real.address
-          weight $real.weight
-          $real.state.substring(0, 3)
-  #else
-    /c/slb/real $real.name/del
-  #end
+    #if($real.action == 'create')
+        #verify_if_obj_exists($real)
+        #create_real($real)
+    #elseif($real.action == 'update')
+        #create_real($real)
+    #else
+        /c/slb/real $real.name/del
+    #end
 
+#end
+
+#macro(create_real,$real)
+    /c/slb/real $real.name
+    rip $real.address
+    weight $real.weight
+    $real.state.substring(0, 3)
+#end
+#macro(verify_if_obj_exists,$real)
+    #set($existing = $alteon.readBean('SlbNewCfgEnhRealServerEntry', $real.name))
+    #if($alteon.isNotEmpty($existing))
+        #error("Real Server name $real.name already exsists in the system")
+    #end
 #end
