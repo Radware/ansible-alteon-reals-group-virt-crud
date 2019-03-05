@@ -16,23 +16,33 @@
     #param($action, 'string', 'values=create,delete,update')
 #end
 
-#set($service = $app.service_params)
-
-
 #device($alteon, 'type=alteon', 'prompt=Alteon')
 #param($app,'VipParams', 'in','required=true')
+#param($output,'object','out')
 
+#set($new_virt_name=[])
+#set($exist_virt_name=[])
+#set($output={})
+
+
+#set($service = $app.service_params)
 #####################################################
 ## virt configuration
 #####################################################
 #if($app.action == 'create' or $app.action == 'update')
     #verify_if_obj_exists($app)
-    #create_virt($app)
+    #if(!($exist_virt_name.contains($app.name)))
+        #create_virt($app)
+        #log('info',"This is new virt")
+    #end
 #elseif($app.action == 'update')
     #create_virt($app)
 #else
     /c/slb/virt $app.name/del
 #end
+
+#set($dummy=$output.put('new_virt_name',$new_virt_name))
+#set($dummy=$output.put('exist_virt_name',$exist_virt_name))
 
 #macro(create_virt,$app)
     /c/slb/virt $app.name
@@ -41,7 +51,6 @@
         #####################################################
         ## service configuration
         #####################################################
-
     /c/slb/virt $app.name/service $service.port $service.protocol
         group $service.group
         dbind $service.dbind
@@ -51,11 +60,14 @@
             mode address
             addr v4 $service.pip_address 255.255.255.255 persist disable
     #end
+    #set($dummy=$new_virt_name.add($app.name))
 #end
 #macro(verify_if_obj_exists,$app)
     #set($existing = $alteon.readBean('SlbNewCfgEnhVirtualServerEntry', $app.name))
     #if($alteon.isNotEmpty($existing))
-        #error("Virt name $app.name already exsists in the system")
+        #set($dummy=$exist_virt_name.add($app.name))
+        #log('info',"Virt name $app.name already exsists in the system")
+        ##error("Virt name $app.name already exsists in the system")
     #end
 #end
 

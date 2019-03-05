@@ -2,7 +2,11 @@
 
 #device($alteon, 'type=alteon', 'prompt=Alteon')
 #param($real_servers,'RealServerParams[]','in')
+#param($output,'object','out')
 
+#set($real_servers_name=[])
+#set($real_servers_exist=[])
+#set($output={})
 #typedef('RealServerParams')
 	#param($name,'string', 'in','required=true')
 	#param($address,'ip','in','required=true')
@@ -14,24 +18,32 @@
 #foreach($real in $real_servers)
     #if($real.action == 'create')
         #verify_if_obj_exists($real)
-        #create_real($real)
+        #if(!($real_servers_exist.contains($real.name)))
+        	#create_real($real)
+            #log('info',"This is new server")
+        #end
     #elseif($real.action == 'update')
-        #create_real($real)
+        #create_real($real)       
     #else
         /c/slb/real $real.name/del
     #end
-
 #end
+#set($dummy=$output.put('reals_created',$real_servers_name))
+#set($dummy=$output.put('reals_exist',$real_servers_exist))
+
 
 #macro(create_real,$real)
     /c/slb/real $real.name
     rip $real.address
     weight $real.weight
     $real.state.substring(0, 3)
+    #set($dummy=$real_servers_name.add($real.name))
 #end
 #macro(verify_if_obj_exists,$real)
     #set($existing = $alteon.readBean('SlbNewCfgEnhRealServerEntry', $real.name))
     #if($alteon.isNotEmpty($existing))
-        #error("Real Server name $real.name already exsists in the system")
+    	#set($dummy=$real_servers_exist.add($real.name))
+        ##error("Real Server name $real.name already exsists in the system")
+        #log('info',"Real Server name $real.name already exsists in the system")        
     #end
 #end

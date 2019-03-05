@@ -8,23 +8,34 @@
 	#param($real_servers,'string[]')
     #param($action, 'string', 'values=create,delete,update')
 #end
-#param('group','GroupParams', 'in','required=true')
+#param($group,'GroupParams', 'in','required=true')
+#param($output,'object','out')
+
+#set($new_group_name=[])
+#set($exist_group_name=[])
+#set($output={})
 
 #if($group.action == 'create')
     #verify_if_obj_exists($group)
-    #create_group($group)
+    #if(!($exist_group_name.contains($group.name)))
+    	#create_group($group)
+        #log('info',"This is new group")
+    #end   
 #elseif($group.action == 'update')
     #create_group($group)
 #else
     /c/slb/group $group.name/del
 #end
 
+#set($dummy=$output.put('new_group_name',$new_group_name))
+#set($dummy=$output.put('exist_group_name',$exist_group_name))
 
 #macro(create_group,$group)
     /c/slb/group $group.name
         metric $group.metric
         health $group.hc
     ## adding real servers to group
+    #set($dummy=$new_group_name.add($group.name))
     #foreach($real in $group.real_servers)
         add $real
     #end
@@ -32,7 +43,9 @@
 #macro(verify_if_obj_exists,$group)
     #set($existing = $alteon.readBean('SlbNewCfgEnhGroupEntry', $group.name))
     #if($alteon.isNotEmpty($existing))
-        #error("Group name $group.name already exsists in the system")
+    	#set($dummy=$exist_group_name.add($group.name))
+        #log('info',"Group name $group.name already exsists in the system")
     #end
 #end
+
 
